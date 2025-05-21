@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-12">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ฟอร์มสั่งปุ๋ย-ค้าส่ง (ใช้ PIN)</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css"> <!-- Link to the new CSS file -->
+
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container py-4 py-md-5">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="card form-card" data-aos="fade-up">
+                    <div class="card-header form-header text-center">
+                        <div class="header-content">
+                            <i class="bi bi-cart-check-fill header-icon"></i>
+                            <h1 class="header-title">ฟอร์มสั่งปุ๋ย-ค้าส่ง</h1>
+                            <p class="header-subtitle" style="font-size: 1.2rem;">
+                                ✳ กรุณากรอก PIN ร้านค้าเพื่อเริ่มทำรายการสั่งซื้อ ✳
+                            </p>
+                        </div>
+                        <div class="decoration decoration-1"></div>
+                        <div class="decoration decoration-2"></div>
+                    </div>
+                    <div class="card-body p-4 p-md-5">
+                        <form id="fertilizerOrderForm" onsubmit="handleFormSubmit(event)">
+                            <!-- Shop Selection (PIN Based) -->
+                            <div class="form-section">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-sm-8">
+                                        <label for="shopNameDisplay" class="form-label"><i class="bi bi-shop"></i> ชื่อร้านค้า</label>
+                                        <input type="text" class="form-control" id="shopNameDisplay" name="ชื่อร้าน" readonly required placeholder="กรุณากรอก PIN เพื่อแสดงชื่อร้าน">
+                                        <input type="hidden" id="verifiedShopPin" name="verifiedShopPin">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button type="button" class="btn btn-outline-primary w-100" id="openPinModalBtn">
+                                            <i class="bi bi-key-fill"></i> กรอก PIN
+                                        </button>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button type="button" class="btn btn-outline-info w-100" id="viewHistoryBtn" disabled>
+                                            <i class="bi bi-clock-history"></i> ดูประวัติการสั่งซื้อ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delivery & Payment Options -->
+                            <div class="form-section">
+                                <h5 class="mb-3"><i class="bi bi-gear-fill"></i> การจัดส่งและชำระเงิน</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="deliveryMethod" class="form-label"><i class="bi bi-truck"></i> ช่องทางการรับปุ๋ย</label>
+                                        <select class="form-select" id="deliveryMethod" name="ช่องทางการรับปุ๋ย" required>
+                                            <option value="" selected disabled>🔸 เลือกช่องทางรับปุ๋ย 🔸</option>
+                                            <option value="จัดส่ง">ให้ทางร้านจัดส่ง</option>
+                                            <option value="รับเองที่ร้าน">รับเองที่ร้าน</option>
+                                            <option value="สั่งเทรลเลอร์">สั่งแบบยกเทรลเลอร์</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="paymentMethod" class="form-label"><i class="bi bi-cash-coin"></i> วิธีการชำระเงิน</label>
+                                        <select class="form-select" id="paymentMethod" name="วิธีการชำระเงิน" required>
+                                            <option value="" selected disabled>🔸 เลือกวิธีชำระเงิน 🔸</option>
+                                            <option value="โอนผ่านธนาคาร SCB 409-621-8437">โอนผ่านธนาคาร SCB 409-621-8437</option>
+                                            <option value="จ่ายเงินสดที่แหลมทอง">จ่ายเงินสดที่ร้านแหลมทองการเกษตร</option>
+                                            <option value="จ่ายสดปลายทาง">จ่ายเงินสดปลายทาง (เมื่อรับสินค้า)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- เพิ่ม div สำหรับแสดงตัวเลือกย่อยและแจ้งเตือน -->
+                            <div id="codSubOptions" class="alert alert-info mt-2" style="display:none;">
+                                <label class="form-label mb-3 fw-bold">กรุณาเลือกวิธีชำระเงินปลายทาง:</label>
+                                <div class="d-flex gap-3 mb-3">
+                                    <div class="flex-grow-1">
+                                        <input type="radio" class="btn-check" id="cod_cash" name="codType" value="จ่ายสด" checked>
+                                        <label class="btn btn-outline-success w-100 py-3" for="cod_cash">
+                                            <i class="bi bi-cash-coin-fill fs-4 d-block mb-2"></i>
+                                            <span class="fw-bold">จ่ายสด</span>
+                                            <small class="d-block text-muted">ชำระเงินสดกับพนักงาน</small>
+                                        </label>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <input type="radio" class="btn-check" id="cod_transfer" name="codType" value="จ่ายโอน">
+                                        <label class="btn btn-outline-primary w-100 py-3" for="cod_transfer">
+                                            <i class="bi bi-bank2 fs-4 d-block mb-2"></i>
+                                            <span class="fw-bold">จ่ายโอน</span>
+                                            <small class="d-block text-muted">โอนเงินผ่านธนาคาร</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="codBankInfo" class="alert alert-warning mt-3" style="display:none;">
+                                    <div class="d-flex flex-column align-items-center text-center">
+                                        <i class="bi bi-bank fs-4 mb-3"></i>
+                                        <div>
+                                            <h6 class="mb-3">โอนผ่านธนาคาร SCB</h6>
+                                            <div class="mb-2">
+                                                <span class="badge bg-success">409-621-8437</span>
+                                            </div>
+                                            <p class="mb-0 fs-5">
+                                                <span class="text-muted">(ชื่อบัญชี: ร้านแหลมทองกิจเกษตร)</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-danger mt-3 mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <small>หากเลือกจ่ายปลายทาง กรุณาเตรียมเงินสดให้พอกับยอดสั่งซื้อด้วยครับ</small>
+                                </div>
+                            </div>
+
+                            <!-- Number of Fertilizer Types -->
+                            <div class="form-section">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="numFertilizers" class="form-label"><i class="bi bi-list-ol"></i> จำนวนสูตรปุ๋ยที่ต้องการสั่ง</label>
+                                        <input type="number" class="form-control" id="numFertilizers" min="1" max="8" placeholder="ระบุจำนวนสูตร (1-8 สูตร)" onchange="generateFertilizerFields()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Fertilizer Rows -->
+                            <div id="fertilizerRowsContainer">
+                                <!-- Fertilizer rows will be injected here by JavaScript -->
+                            </div>
+
+                            <!-- Optional Notes -->
+                            <div class="form-section">
+                                <label for="orderNotes" class="form-label"><i class="bi bi-pencil-square"></i> หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                                <textarea class="form-control" id="orderNotes" name="หมายเหตุ" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม เช่น วันที่ต้องการรับสินค้า หรืออื่นๆ"></textarea>
+                            </div>
+
+                            <!-- Totals Summary -->
+                            <div class="form-section">
+                                <h5 class="mb-3"><i class="bi bi-calculator"></i> สรุปยอดรวม</h5>
+                                <div class="total-box p-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>จำนวนปุ๋ยทั้งหมด:</span>
+                                        <strong id="totalQuantityDisplay" class="ms-1">0 กระสอบ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>ยอดรวมทั้งสิ้น:</span>
+                                        <strong id="grandTotalDisplay" class="ms-1 text-success h5 large-font">0 บาท</strong>
+                                    </div>
+                                    <input type="hidden" id="grandTotalInput" name="ยอดรวมทั้งหมด">
+                                    <input type="hidden" id="totalQuantityInput" name="จำนวนปุ๋ยรวม">
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-check-circle-fill"></i> ตรวจสอบและยืนยันคำสั่งซื้อ
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Modal -->
+    <div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="summaryModalLabel">
+                        <i class="bi bi-clipboard-check-fill"></i> สรุปคำสั่งซื้อของท่าน
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3"><i class="bi bi-person-check-fill"></i> ข้อมูลผู้สั่งซื้อและบริการ</h6>
+                            <p class="mb-1"><strong>ชื่อร้าน:</strong> <span id="modalShopName">-</span></p>
+                            <p class="mb-1"><strong>ช่องทางการรับปุ๋ย:</strong> <span id="modalDeliveryMethod">-</span></p>
+                            <p class="mb-0"><strong>วิธีการชำระเงิน:</strong> <span id="modalPaymentMethod">-</span></p>
+                            <p class="mb-0 mt-1" id="modalOrderNotesP" style="display:none;"><strong>หมายเหตุ:</strong> <span id="modalOrderNotes">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Fertilizer Details Section -->
+                    <div class="card bg-light">
+                        <div class="card-body" id="modalFertilizerDetails">
+                            <h6 class="card-title mb-3"><i class="bi bi-boxes"></i> รายละเอียดรายการปุ๋ย</h6>
+                            <!-- Fertilizer details will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <h6 class="mb-1"><i class="bi bi-box-seam-fill"></i> จำนวนรวมทั้งหมด</h6>
+                                    <p class="h4 text-primary mb-0"><span id="modalTotalQuantity">0</span> กระสอบ</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-1"><i class="bi bi-credit-card-2-front-fill"></i> ยอดรวมทั้งสิ้น</h6>
+                                    <p class="h4 text-success mb-0"><span id="modalGrandTotal">0</span> บาท</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="text-success mb-2"><i class="bi bi-heart-fill"></i> ขอบคุณที่ไว้วางใจสั่งซื้อสินค้ากับเราครับ/ค่ะ</p>
+                        <p class="text-muted small mb-0">ทางร้านจะติดต่อกลับเพื่อยืนยันคำสั่งซื้อของท่านโดยเร็วที่สุด 😊</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-pencil-fill"></i> แก้ไขข้อมูล
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmOrderBtn">
+                        <i class="bi bi-send-check-fill"></i> ยืนยันและส่งคำสั่งซื้อ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Modal -->
+    <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="pinModalLabel">
+                        <i class="bi bi-shield-lock-fill"></i> กรุณากรอกรหัส PIN ร้านค้า
+                    </h5>
+                    <!-- No close button here, force PIN entry or cancel -->
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="pinInput" class="form-label">กรอกรหัส PIN 4 หลัก</label>
+                        <input type="password" class="form-control form-control-lg text-center" id="pinInput" maxlength="4" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" placeholder="XXXX">
+                        <div class="invalid-feedback text-center mt-2" id="pinInvalidFeedback">กรุณากรอกรหัส PIN 4 หลักให้ถูกต้อง</div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                     <button type="button" class="btn btn-secondary" id="cancelPinBtn" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-warning" id="verifyPinBtn">
+                        <i class="bi bi-check-lg"></i> ยืนยัน PIN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this new div where appropriate in your HTML structure -->
+    <div class="card border-primary mb-6 custom-margin" style="max-width: 52rem;">
+        <!-- You can add content here -->
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="historyModalLabel">
+                        <i class="bi bi-clock-history"></i> ประวัติการสั่งซื้อ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <h6 class="text-muted">ประวัติการสั่งซื้อของร้าน: <span id="historyShopName" class="text-primary"></span></h6>
+                        <div class="row justify-content-center mt-3">
+                            <div class="col-md-6">
+                                <select class="form-select" id="historyDateFilter">
+                                    <option value="">แสดงทั้งหมด</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="historyContent">
+                        <!-- History items will be populated here -->
+                    </div>
+                    <div id="noHistoryMessage" class="text-center text-muted py-4" style="display: none;">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">ไม่พบประวัติการสั่งซื้อ</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> ปิด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="js/script.js"></script> <!-- Link to the new JavaScript file -->
+</body>
+</html>
